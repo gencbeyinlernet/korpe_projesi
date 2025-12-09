@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ArrowRight, Brain, Target, Compass, BarChart3, Users, CheckCircle2 } from 'lucide-react';
 import { PageView } from '../types';
@@ -37,15 +36,14 @@ export const LandingPage: React.FC<LandingProps> = ({ onNavigate }) => {
           <div className="inline-block px-4 py-1.5 bg-purple-100 text-korpe-700 rounded-full text-sm font-semibold mb-2 shadow-sm border border-purple-200">
             ✨ Rize Bist MTAL - TÜBİTAK 2204A Yazılım Projesidir
           </div>
-          <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-            Kariyer Yolculuğun <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-korpe-600 to-purple-400">
-              Burada Başlıyor
-            </span>
+          <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
+            KÖRPE <span className="text-2xl font-normal text-gray-600 block mt-2">(Kariyerinde Öğrenciye Rehberlik Eden Planlama Eğitimi)</span>
           </h1>
-          <p className="text-xl text-gray-600 leading-relaxed max-w-2xl">
-            KÖRPE AI, kişiliğine ve hayallerine odaklanan akıllı kariyer rehberi. 
-            Kişilik analizi, ilgi alanları ve akademik başarılarını bütüncül olarak analiz ederek sana özel bir yol haritası sunuyoruz.
+          <h2 className="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-korpe-600 to-purple-500">
+            Yapay Zekâ Destekli Çok Boyutlu Kişisel Kariyer Yönlendirme Sistemi
+          </h2>
+          <p className="text-lg text-gray-600 leading-relaxed max-w-2xl">
+            Klasik rehberlik testlerinin ötesine geçin. Kişilik, ilgi alanları ve akademik başarı verilerini yapay zeka ile analiz ederek öğrenciye en uygun kariyer yolculuğunu tasarlıyoruz.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
             <button 
@@ -63,29 +61,29 @@ export const LandingPage: React.FC<LandingProps> = ({ onNavigate }) => {
         <div className="lg:w-1/2 mt-16 lg:mt-0 relative">
           {/* Collage Container */}
           <div className="relative z-10 bg-white p-4 rounded-3xl shadow-2xl border border-gray-100 rotate-1 hover:rotate-0 transition duration-500 ease-out">
-             <div className="grid grid-cols-2 gap-4 items-start">
+             <div className="grid grid-cols-2 gap-4 items-center">
                 
-                {/* Image 1: Using App (Phone Focus) */}
-                <div className="relative group">
+                {/* Image 1: Using App (Phone Focus) - Left Top */}
+                <div className="relative group transform translate-y-[-20px]">
                    <img 
-                     src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=600" 
+                     src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=600" 
                      alt="KÖRPE AI Kullanan Öğrenci" 
                      className="rounded-2xl object-cover h-64 w-full shadow-md transform transition group-hover:scale-[1.02]"
                    />
                    {/* Mock App UI Overlay */}
-                   <div className="absolute bottom-4 left-3 right-3 bg-white/95 backdrop-blur-md p-2 rounded-xl border border-gray-100 shadow-lg flex items-center gap-3 animate-fade-in-up">
-                      <div className="bg-korpe-100 p-1.5 rounded-lg">
-                        <Brain className="w-4 h-4 text-korpe-600" />
+                   <div className="absolute bottom-4 left-3 right-3 bg-white/95 backdrop-blur-md p-3 rounded-xl border border-gray-100 shadow-lg flex items-center gap-3 animate-fade-in-up">
+                      <div className="bg-korpe-100 p-2 rounded-lg shrink-0">
+                        <Brain className="w-5 h-5 text-korpe-600" />
                       </div>
                       <div>
-                        <p className="text-[10px] text-gray-500 font-semibold uppercase">KÖRPE AI</p>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">KÖRPE AI</p>
                         <p className="text-xs font-bold text-gray-800">Analiz Tamamlandı ✅</p>
                       </div>
                    </div>
                 </div>
 
-                {/* Image 2: Graduation/Success (Staggered Down) */}
-                <div className="relative mt-12 group">
+                {/* Image 2: Graduation/Success (Staggered Down) - Right Bottom */}
+                <div className="relative group transform translate-y-[20px]">
                    <img 
                      src="https://images.unsplash.com/photo-1627556592933-ffe99c1cd9eb?auto=format&fit=crop&q=80&w=600" 
                      alt="Mezuniyet Başarısı" 
@@ -93,19 +91,19 @@ export const LandingPage: React.FC<LandingProps> = ({ onNavigate }) => {
                    />
                    {/* Success Badge */}
                    <div className="absolute top-4 right-3 bg-korpe-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
-                      <Target size={12} /> Hedef: Üniversite
+                      <Target size={12} /> Hedef Başarıldı
                    </div>
                 </div>
              </div>
 
-            {/* Float Stats Badge */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-xl border border-white/50 flex items-center gap-4 min-w-[200px]">
+            {/* Float Stats Badge Center */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-md p-4 rounded-xl shadow-2xl border border-white/50 flex items-center gap-4 min-w-[200px] z-20">
               <div className="bg-green-100 p-3 rounded-full text-green-600">
                 <Target size={24} />
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Hedef Başarısı</p>
-                <p className="text-xl font-black text-gray-900">%92</p>
+                <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Kariyer Hedefi</p>
+                <p className="text-xl font-black text-gray-900">%92 Uyum</p>
               </div>
             </div>
           </div>

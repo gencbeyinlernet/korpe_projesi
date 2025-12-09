@@ -58,8 +58,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, onGue
           <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
             <Brain className="text-white w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-bold text-white">KÖRPE AI</h2>
-          <p className="text-korpe-100 text-sm mt-1">Geleceğini tasarlamaya başla</p>
+          <h2 className="text-2xl font-bold text-white">KÖRPE</h2>
+          <p className="text-korpe-100 text-xs mt-1 font-medium">Kariyerinde Öğrenciye Rehberlik Eden Planlama Eğitimi</p>
         </div>
 
         {/* Tabs */}
