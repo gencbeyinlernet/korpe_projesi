@@ -2,7 +2,8 @@ import { GoogleGenAI, Type } from "@google/genai";
 
 // Initialize Gemini API Client
 // Netlify veya yerel ortamda process.env hatası almamak için güvenli erişim ve fallback eklendi.
-const apiKey = 'AIzaSyATmbZLBihsOveD11szRPAdJR-vSD43tfc';
+// GÜNCELLENMİŞ API ANAHTARI
+const apiKey = 'AIzaSyDryJ5wDMLX5b6Z3Myy0MgXLUCeUQykff0';
 
 const ai = new GoogleGenAI({ apiKey });
 
