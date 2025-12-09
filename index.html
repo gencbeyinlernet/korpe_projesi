@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KÖRPE AI | Geleceğini Tasarla</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+              korpe: {
+                50: '#f5f3ff',
+                100: '#ede9fe',
+                200: '#ddd6fe',
+                300: '#c4b5fd',
+                400: '#a78bfa',
+                500: '#8b5cf6',
+                600: '#7c3aed',
+                700: '#6d28d9',
+                800: '#5b21b6',
+                900: '#4c1d95',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      /* Custom scrollbar for chat */
+      .scrollbar-thin::-webkit-scrollbar {
+        width: 6px;
+      }
+      .scrollbar-thin::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .scrollbar-thin::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1;
+        border-radius: 20px;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "react": "https://aistudiocdn.com/react@^19.2.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
+    "recharts": "https://aistudiocdn.com/recharts@^3.5.1",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@2.48.1"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
