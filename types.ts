@@ -46,6 +46,33 @@ export interface CareerReport {
   universities: UniversitySuggestion[];
   weeklyPlan: WeeklyPlan[];
   riasecScores?: { [key: string]: number }; // R, I, A, S, E, C scores
+  miScores?: { [key: string]: number }; // Multiple Intelligence Scores
+}
+
+export interface SupplementalData {
+  gpa?: number; // Genel Ort
+  focusArea?: string; 
+  
+  // Detaylı Akademik Başarı (Dönemsel Performans için)
+  subjectGrades: {
+    math: number;
+    science: number;
+    turkish: number;
+    social: number;
+    language: number;
+  };
+
+  // Sözel Veriler
+  hobbies: string;
+  futureGoals: string;
+
+  // Teknik ve Yetkinlik Becerileri (1-10 Skalası)
+  technicalSkills: {
+    coding: number;
+    problemSolving: number;
+    teamwork: number;
+    presentation: number;
+  }
 }
 
 export interface User {

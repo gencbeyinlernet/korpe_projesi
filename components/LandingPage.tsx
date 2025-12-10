@@ -43,7 +43,7 @@ export const LandingPage: React.FC<LandingProps> = ({ onNavigate }) => {
             Yapay Zekâ Destekli Çok Boyutlu Kişisel Kariyer Yönlendirme Sistemi
           </h2>
           <p className="text-lg text-gray-600 leading-relaxed max-w-2xl">
-            Klasik rehberlik testlerinin ötesine geçin. Kişilik, ilgi alanları ve akademik başarı verilerini yapay zeka ile analiz ederek öğrenciye en uygun kariyer yolculuğunu tasarlıyoruz.
+            Burak TURGUT danışmanlığında 3 meslek lisesi öğrencisi tarafından hazırlanan projede klasik rehberlik testlerinin ötesine geçiyorsunuz. Kişilik, ilgi alanları ve akademik başarı verilerini yapay zeka ile analiz ederek öğrenciye en uygun kariyer yolculuğunu tasarlıyoruz.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
             <button 

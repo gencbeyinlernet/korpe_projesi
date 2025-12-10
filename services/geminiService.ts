@@ -1,4 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import { SupplementalData } from "../types";
 
 // Initialize Gemini API Client
 // Netlify veya yerel ortamda process.env hatası almamak için güvenli erişim ve fallback eklendi.
@@ -9,7 +10,7 @@ const ai = new GoogleGenAI({ apiKey });
 
 export const SYSTEM_INSTRUCTION = `
 Sen KÖRPE AI adında, lise öğrencileri için uzman bir kariyer danışmanısın.
-Amacın: Öğrencilerin kişilik özelliklerini, ilgi alanlarını ve akademik başarılarını analiz ederek onlara en doğru meslek, üniversite bölümü ve kişisel gelişim tavsiyelerini vermek.
+Amacın: Öğrencilerin kişilik özelliklerini (Holland), zeka türlerini (Çoklu Zeka), detaylı akademik başarılarını ve kişisel hedeflerini analiz ederek onlara en doğru meslek, üniversite bölümü ve kişisel gelişim tavsiyelerini vermek.
 Tonun: Destekleyici, motive edici, bilimsel ve veri odaklı.
 `;
 
@@ -39,13 +40,42 @@ export const getGeminiResponse = async (history: { role: string; parts: { text: 
 // Kişiselleştirilmiş Rapor Üretimi
 export const generateCareerReport = async (
   riasecScores: { [key: string]: number },
-  studentName: string
+  miScores: { [key: string]: number },
+  studentName: string,
+  supplementalData?: SupplementalData
 ) => {
   if (!apiKey) return null;
 
+  let extraContext = "";
+  if (supplementalData) {
+    extraContext = `
+    3. DETAYLI ÖĞRENCİ PROFİLİ VE AKADEMİK VERİLER:
+    
+    A. Akademik Başarı (Ders Bazlı Performans 0-100):
+    - Matematik: ${supplementalData.subjectGrades.math}
+    - Fen Bilimleri: ${supplementalData.subjectGrades.science}
+    - Türkçe / Edebiyat: ${supplementalData.subjectGrades.turkish}
+    - Sosyal Bilimler: ${supplementalData.subjectGrades.social}
+    - Yabancı Dil: ${supplementalData.subjectGrades.language}
+    - Genel Ort (OBP): ${supplementalData.gpa || "Belirtilmedi"}
+    - Alanı: ${supplementalData.focusArea || "Genel"}
+
+    B. Kişisel İlgi ve Hedefler:
+    - Hobiler & İlgi Alanları: ${supplementalData.hobbies}
+    - Gelecek Hedefleri: ${supplementalData.futureGoals}
+
+    C. Teknik ve Yetkinlik Becerileri (1-10 Üzerinden):
+    - Kodlama / Bilişim: ${supplementalData.technicalSkills.coding}
+    - Problem Çözme: ${supplementalData.technicalSkills.problemSolving}
+    - Takım Çalışması: ${supplementalData.technicalSkills.teamwork}
+    - Sunum / İletişim: ${supplementalData.technicalSkills.presentation}
+    `;
+  }
+
   const prompt = `
     Öğrenci Adı: ${studentName}
-    Holland (RIASEC) Skorları:
+    
+    1. HOLLAND (RIASEC) MESLEKİ İLGİ SKORLARI:
     - Realistic (Gerçekçi): ${riasecScores['R']}
     - Investigative (Araştırıcı): ${riasecScores['I']}
     - Artistic (Sanatsal): ${riasecScores['A']}
@@ -53,10 +83,35 @@ export const generateCareerReport = async (
     - Enterprising (Girişimci): ${riasecScores['E']}
     - Conventional (Geleneksel): ${riasecScores['C']}
 
-    Lütfen bu skorlara dayanarak bu öğrenci için detaylı bir kariyer analiz raporu oluştur.
-    Aşağıdaki JSON formatına birebir uymalısın. Yaratıcı ve destekleyici ol.
-    Hangi mesleklerin bu profile uygun olduğunu, hangi becerilerin gelişmesi gerektiğini detaylandır.
-    Akademik eşleşmeleri (Matematik, Fizik vb.) bu profile göre mantıksal olarak kurgula (Örneğin Araştırmacı yüksekse Mat/Fen puanlarını yüksek varsay).
+    2. ÇOKLU ZEKA (MULTIPLE INTELLIGENCE) SKORLARI (Ortalama Puanlar 1.00 - 5.00 Arası):
+    - Sözel/Dilsel: ${miScores['Linguistic']}
+    - Mantıksal/Matematiksel: ${miScores['Logical']}
+    - Görsel/Uzamsal: ${miScores['Spatial']}
+    - Bedensel/Kinestetik: ${miScores['Kinesthetic']}
+    - Müziksel/Ritmik: ${miScores['Musical']}
+    - Sosyal/Kişilerarası: ${miScores['Interpersonal']}
+    - İçsel/Öze Dönük: ${miScores['Intrapersonal']}
+    - Doğacı: ${miScores['Naturalist']}
+
+    ${extraContext}
+
+    YÖNERGE:
+    Bu verileri harmanlayarak (sentezleyerek) detaylı bir kariyer analiz raporu oluştur.
+    
+    ÖLÇEK DEĞERLENDİRME KURALI (Çoklu Zeka için):
+    Çoklu Zeka puanları 1.00 ile 5.00 arasındadır. Değerlendirme yaparken şu aralıkları kesinlikle dikkate al:
+    - 1.00 ile 2.33 arası: Düşük Seviye (Zayıf)
+    - 2.33 ile 3.66 arası: Orta Seviye
+    - 3.66 ile 5.00 arası: Yüksek Seviye (Gelişmiş)
+    Analizinde, öğrencinin yüksek çıkan zeka türlerini (3.66 üzeri) mutlaka vurgula ve meslek önerilerini buna dayandır.
+
+    KRİTİK ANALİZ NOKTALARI:
+    1. Tutarlılık Kontrolü: Öğrencinin "Gelecek Hedefleri" ile "Akademik Başarısı" ve "Test Sonuçları" örtüşüyor mu? Örtüşmüyorsa (Örn: Tıp istiyor ama Fen notu düşük), raporunda bunu nazikçe belirt ve alternatif yollar veya yoğun çalışma planı öner.
+    2. Beceri Odaklılık: Eğer "Kodlama" becerisi yüksekse ve "Logical" zekası yüksekse (3.66 üzeri), not ortalaması düşük olsa bile yazılım/bilişim alanlarını güçlü bir şekilde öner.
+    3. Hobiler: Hobilerini mesleğe dönüştürme potansiyelini değerlendir.
+
+    ÇIKTI FORMATI (JSON):
+    Aşağıdaki JSON şemasına birebir uymalısın.
   `;
 
   try {
@@ -68,8 +123,8 @@ export const generateCareerReport = async (
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            personalityAnalysis: { type: Type.STRING, description: "Beş faktör ve genel kişilik analizi paragrafı" },
-            interestAnalysis: { type: Type.STRING, description: "RIASEC sonuçlarının yorumlanması" },
+            personalityAnalysis: { type: Type.STRING, description: "Holland, Çoklu Zeka (Değerlendirme aralıklarına göre yorumlanmış) ve Kişisel Hedeflerin sentezi." },
+            interestAnalysis: { type: Type.STRING, description: "Hobiler ve akademik ilginin kariyer hedefleriyle uyumu." },
             careers: {
               type: Type.ARRAY,
               items: {
