@@ -1,6 +1,22 @@
 
 export type UserRole = 'teacher' | 'student' | 'parent';
 
+export type AssessmentStage = 'holland' | 'transition_to_mi' | 'mi' | 'transition_to_academic' | 'academic';
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'model';
+  text: string;
+  timestamp: Date;
+}
+
+export interface StudentProfile {
+  name: string;
+  grade: string;
+  academicFocus: string;
+  personalityScores: { subject: string; A: number; fullMark: number }[];
+}
+
 export interface CareerSuggestion {
   title: string;
   matchPercentage: number;
@@ -45,15 +61,15 @@ export interface CareerReport {
   academicMatches: AcademicMatch[];
   universities: UniversitySuggestion[];
   weeklyPlan: WeeklyPlan[];
-  riasecScores?: { [key: string]: number }; // R, I, A, S, E, C scores
-  miScores?: { [key: string]: number }; // Multiple Intelligence Scores
+  riasecScores?: { [key: string]: number };
+  miScores?: { [key: string]: number };
 }
 
 export interface SupplementalData {
-  gpa?: number; // Genel Ort
+  gpa?: number; 
+  previousGpa?: number; // Dönemsel performans karşılaştırması için
   focusArea?: string; 
   
-  // Detaylı Akademik Başarı (Dönemsel Performans için)
   subjectGrades: {
     math: number;
     science: number;
@@ -62,11 +78,9 @@ export interface SupplementalData {
     language: number;
   };
 
-  // Sözel Veriler
   hobbies: string;
   futureGoals: string;
 
-  // Teknik ve Yetkinlik Becerileri (1-10 Skalası)
   technicalSkills: {
     coding: number;
     problemSolving: number;
@@ -82,33 +96,11 @@ export interface User {
   name: string;
   role: UserRole;
   isAssessmentComplete?: boolean;
-  
-  // İlişkisel Veriler
   teacherUsername?: string;
   parentName?: string;
   parentContact?: string;
   linkedStudentUsername?: string;
-  
-  // Generated Report
   report?: CareerReport;
-}
-
-export interface StudentProfile {
-  name: string;
-  grade: string;
-  personalityScores: {
-    subject: string;
-    A: number;
-    fullMark: number;
-  }[];
-  academicFocus: string;
-}
-
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'model';
-  text: string;
-  timestamp: Date;
 }
 
 export enum PageView {

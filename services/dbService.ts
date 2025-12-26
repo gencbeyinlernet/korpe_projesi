@@ -1,8 +1,8 @@
+
 import { supabase } from './supabaseClient';
 import { User, CareerReport } from '../types';
 
-// Helper to map DB row to User object
-// Converts snake_case (DB) to camelCase (App)
+// DB satırını User nesnesine eşleyen yardımcı fonksiyon
 const mapRowToUser = (row: any): User => ({
   id: row.id,
   username: row.username,
@@ -17,8 +17,7 @@ const mapRowToUser = (row: any): User => ({
   report: row.report
 });
 
-// Helper to map User object to DB row
-// Converts camelCase (App) to snake_case (DB)
+// User nesnesini DB satırına eşleyen yardımcı fonksiyon
 const mapUserToRow = (user: Partial<User>) => {
   const row: any = {
     username: user.username,
@@ -33,36 +32,29 @@ const mapUserToRow = (user: Partial<User>) => {
     report: user.report
   };
   
-  // Remove undefined keys so Supabase doesn't complain or overwrite with null if we didn't intend to
   Object.keys(row).forEach(key => row[key] === undefined && delete row[key]);
   return row;
 };
 
 export const dbService = {
-  // Login
+  // Giriş
   async login(username: string, password: string): Promise<User | null> {
     const { data, error } = await supabase
       .from('users')
       .select('*')
       .eq('username', username)
-      .eq('password', password) // Note: In production, hash passwords!
+      .eq('password', password)
       .single();
 
     if (error) {
-      // PGRST116 is "JSON object requested, multiple (or no) rows returned". 
-      // In .single() context, it means no user found.
-      if (error.code !== 'PGRST116') {
-        console.error('Login error:', error);
-      }
-      return null;
+      if (error.code === 'PGRST116') return null; // Kayıt bulunamadı
+      throw error;
     }
-
-    if (!data) return null;
 
     return mapRowToUser(data);
   },
 
-  // Register
+  // Kayıt
   async register(user: Omit<User, 'id'>): Promise<User | null> {
     const row = mapUserToRow(user);
     
@@ -73,14 +65,13 @@ export const dbService = {
       .single();
 
     if (error) {
-      console.error('Registration error:', error);
       throw error;
     }
 
     return mapRowToUser(data);
   },
 
-  // Update Report (e.g. after assessment)
+  // Rapor Güncelleme
   async updateUserReport(userId: string, report: CareerReport): Promise<boolean> {
     const { error } = await supabase
       .from('users')
@@ -91,13 +82,12 @@ export const dbService = {
       .eq('id', userId);
 
     if (error) {
-      console.error('Update report error:', error);
-      return false;
+      throw error;
     }
     return true;
   },
 
-  // Get Students for a Teacher
+  // Öğretmene Bağlı Öğrencileri Getir
   async getStudentsByTeacher(teacherUsername: string): Promise<User[]> {
     const { data, error } = await supabase
       .from('users')
@@ -106,27 +96,9 @@ export const dbService = {
       .eq('teacher_username', teacherUsername);
 
     if (error) {
-      console.error('Fetch students error:', error);
-      return [];
+      throw error;
     }
 
     return data.map(mapRowToUser);
-  },
-
-  // Get a single student (e.g. for Parent view)
-  async getStudentByUsername(username: string): Promise<User | null> {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('role', 'student')
-      .eq('username', username)
-      .single();
-
-    if (error) {
-        // Only log if it's not a "not found" error for cleaner console
-        if (error.code !== 'PGRST116') console.error('Fetch student error:', error);
-        return null;
-    }
-    return mapRowToUser(data);
   }
 };

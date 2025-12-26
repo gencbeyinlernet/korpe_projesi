@@ -1,12 +1,9 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { SupplementalData } from "../types";
 
-// Initialize Gemini API Client
-// Netlify veya yerel ortamda process.env hatası almamak için güvenli erişim ve fallback eklendi.
-// GÜNCELLENMİŞ API ANAHTARI
-const apiKey = 'AIzaSyDryJ5wDMLX5b6Z3Myy0MgXLUCeUQykff0';
-
-const ai = new GoogleGenAI({ apiKey });
+// Always use process.env.API_KEY for initialization as per guidelines
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const SYSTEM_INSTRUCTION = `
 Sen KÖRPE AI adında, lise öğrencileri için uzman bir kariyer danışmanısın.
@@ -14,117 +11,71 @@ Amacın: Öğrencilerin kişilik özelliklerini (Holland), zeka türlerini (Çok
 Tonun: Destekleyici, motive edici, bilimsel ve veri odaklı.
 `;
 
-export const getGeminiResponse = async (history: { role: string; parts: { text: string }[] }[], newMessage: string) => {
-  if (!apiKey) {
-    return "API Anahtarı bulunamadı.";
-  }
-
-  try {
-    const chat = ai.chats.create({
-      model: 'gemini-2.5-flash',
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        temperature: 0.7,
-      },
-      history: history,
-    });
-
-    const result = await chat.sendMessage({ message: newMessage });
-    return result.text;
-  } catch (error) {
-    console.error("Gemini API Error:", error);
-    return "Üzgünüm, şu anda bağlantıda bir sorun yaşıyorum.";
-  }
-};
-
-// Kişiselleştirilmiş Rapor Üretimi
+/**
+ * Generates a comprehensive career report using Gemini 3 Pro for complex reasoning.
+ */
 export const generateCareerReport = async (
   riasecScores: { [key: string]: number },
   miScores: { [key: string]: number },
   studentName: string,
   supplementalData?: SupplementalData
 ) => {
-  if (!apiKey) return null;
-
+  // Use the pre-initialized `ai` instance directly
+  
   let extraContext = "";
   if (supplementalData) {
+    const performanceTrend = supplementalData.previousGpa && supplementalData.gpa 
+      ? (supplementalData.gpa > supplementalData.previousGpa ? "Yükselen Performans" : "Düşen Performans")
+      : "Kararlı Performans";
+
     extraContext = `
     3. DETAYLI ÖĞRENCİ PROFİLİ VE AKADEMİK VERİLER:
+    A. Akademik Başarı & Dönemsel Performans:
+    - Güncel Not Ortalaması (OBP): ${supplementalData.gpa || "Belirtilmedi"}
+    - Önceki Dönem Ortalaması: ${supplementalData.previousGpa || "Belirtilmedi"}
+    - Performans Eğilimi: ${performanceTrend}
+    - Ders Bazlı Notlar (0-100): Mat: ${supplementalData.subjectGrades.math}, Fen: ${supplementalData.subjectGrades.science}, Tr: ${supplementalData.subjectGrades.turkish}, Sos: ${supplementalData.subjectGrades.social}, Dil: ${supplementalData.subjectGrades.language}
     
-    A. Akademik Başarı (Ders Bazlı Performans 0-100):
-    - Matematik: ${supplementalData.subjectGrades.math}
-    - Fen Bilimleri: ${supplementalData.subjectGrades.science}
-    - Türkçe / Edebiyat: ${supplementalData.subjectGrades.turkish}
-    - Sosyal Bilimler: ${supplementalData.subjectGrades.social}
-    - Yabancı Dil: ${supplementalData.subjectGrades.language}
-    - Genel Ort (OBP): ${supplementalData.gpa || "Belirtilmedi"}
-    - Alanı: ${supplementalData.focusArea || "Genel"}
-
     B. Kişisel İlgi ve Hedefler:
     - Hobiler & İlgi Alanları: ${supplementalData.hobbies}
     - Gelecek Hedefleri: ${supplementalData.futureGoals}
 
     C. Teknik ve Yetkinlik Becerileri (1-10 Üzerinden):
-    - Kodlama / Bilişim: ${supplementalData.technicalSkills.coding}
-    - Problem Çözme: ${supplementalData.technicalSkills.problemSolving}
-    - Takım Çalışması: ${supplementalData.technicalSkills.teamwork}
-    - Sunum / İletişim: ${supplementalData.technicalSkills.presentation}
+    - Kodlama: ${supplementalData.technicalSkills.coding}, Problem Çözme: ${supplementalData.technicalSkills.problemSolving}, Takım: ${supplementalData.technicalSkills.teamwork}, Sunum: ${supplementalData.technicalSkills.presentation}
     `;
   }
 
   const prompt = `
     Öğrenci Adı: ${studentName}
     
-    1. HOLLAND (RIASEC) MESLEKİ İLGİ SKORLARI:
-    - Realistic (Gerçekçi): ${riasecScores['R']}
-    - Investigative (Araştırıcı): ${riasecScores['I']}
-    - Artistic (Sanatsal): ${riasecScores['A']}
-    - Social (Sosyal): ${riasecScores['S']}
-    - Enterprising (Girişimci): ${riasecScores['E']}
-    - Conventional (Geleneksel): ${riasecScores['C']}
+    1. HOLLAND (RIASEC) SKORLARI: R:${riasecScores.R}, I:${riasecScores.I}, A:${riasecScores.A}, S:${riasecScores.S}, E:${riasecScores.E}, C:${riasecScores.C}
 
-    2. ÇOKLU ZEKA (MULTIPLE INTELLIGENCE) SKORLARI (Ortalama Puanlar 1.00 - 5.00 Arası):
-    - Sözel/Dilsel: ${miScores['Linguistic']}
-    - Mantıksal/Matematiksel: ${miScores['Logical']}
-    - Görsel/Uzamsal: ${miScores['Spatial']}
-    - Bedensel/Kinestetik: ${miScores['Kinesthetic']}
-    - Müziksel/Ritmik: ${miScores['Musical']}
-    - Sosyal/Kişilerarası: ${miScores['Interpersonal']}
-    - İçsel/Öze Dönük: ${miScores['Intrapersonal']}
-    - Doğacı: ${miScores['Naturalist']}
+    2. ÇOKLU ZEKA (MI) ARİTMETİK ORTALAMALARI (1.00-5.00):
+    - Dilsel: ${miScores.Linguistic}, Mantıksal: ${miScores.Logical}, Görsel: ${miScores.Spatial}, Kinestetik: ${miScores.Kinesthetic}, Müziksel: ${miScores.Musical}, Sosyal: ${miScores.Interpersonal}, İçsel: ${miScores.Intrapersonal}, Doğacı: ${miScores.Naturalist}
 
     ${extraContext}
 
-    YÖNERGE:
-    Bu verileri harmanlayarak (sentezleyerek) detaylı bir kariyer analiz raporu oluştur.
-    
-    ÖLÇEK DEĞERLENDİRME KURALI (Çoklu Zeka için):
-    Çoklu Zeka puanları 1.00 ile 5.00 arasındadır. Değerlendirme yaparken şu aralıkları kesinlikle dikkate al:
-    - 1.00 ile 2.33 arası: Düşük Seviye (Zayıf)
-    - 2.33 ile 3.66 arası: Orta Seviye
-    - 3.66 ile 5.00 arası: Yüksek Seviye (Gelişmiş)
-    Analizinde, öğrencinin yüksek çıkan zeka türlerini (3.66 üzeri) mutlaka vurgula ve meslek önerilerini buna dayandır.
+    DEĞERLENDİRME KRİTERLERİ (KESİN UYULACAK):
+    Çoklu Zeka aritmetik ortalaması için:
+    - 1.00 - 2.33: DÜŞÜK seviye (Bu zeka türü henüz gelişmemiş).
+    - 2.33 - 3.66: ORTA seviye.
+    - 3.66 - 5.00: YÜKSEK seviye (Baskın yetenek).
 
-    KRİTİK ANALİZ NOKTALARI:
-    1. Tutarlılık Kontrolü: Öğrencinin "Gelecek Hedefleri" ile "Akademik Başarısı" ve "Test Sonuçları" örtüşüyor mu? Örtüşmüyorsa (Örn: Tıp istiyor ama Fen notu düşük), raporunda bunu nazikçe belirt ve alternatif yollar veya yoğun çalışma planı öner.
-    2. Beceri Odaklılık: Eğer "Kodlama" becerisi yüksekse ve "Logical" zekası yüksekse (3.66 üzeri), not ortalaması düşük olsa bile yazılım/bilişim alanlarını güçlü bir şekilde öner.
-    3. Hobiler: Hobilerini mesleğe dönüştürme potansiyelini değerlendir.
-
-    ÇIKTI FORMATI (JSON):
-    Aşağıdaki JSON şemasına birebir uymalısın.
+    Raporunda öğrencinin dönemsel performans eğilimini, hobilerini ve hedeflerini Holland/Zeka sonuçlarıyla sentezle. Çelişki varsa (Örn: Hedef Tıp ama Mantıksal Zeka/Fen notu düşük) gelişim önerileri ver.
   `;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
+        systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            personalityAnalysis: { type: Type.STRING, description: "Holland, Çoklu Zeka (Değerlendirme aralıklarına göre yorumlanmış) ve Kişisel Hedeflerin sentezi." },
-            interestAnalysis: { type: Type.STRING, description: "Hobiler ve akademik ilginin kariyer hedefleriyle uyumu." },
+            personalityAnalysis: { type: Type.STRING },
+            interestAnalysis: { type: Type.STRING },
             careers: {
               type: Type.ARRAY,
               items: {
@@ -190,9 +141,29 @@ export const generateCareerReport = async (
       }
     });
 
+    // Extract text output from GenerateContentResponse property directly
     return JSON.parse(response.text || '{}');
   } catch (error) {
     console.error("Report Generation Error:", error);
     return null;
+  }
+};
+
+/**
+ * Handles chat assistant queries using Gemini 3 Flash for efficiency.
+ */
+export const getGeminiResponse = async (history: any[], prompt: string) => {
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: [...history, { role: 'user', parts: [{ text: prompt }] }],
+      config: {
+        systemInstruction: SYSTEM_INSTRUCTION,
+      }
+    });
+    return response.text;
+  } catch (error) {
+    console.error("Chat Error:", error);
+    return "Üzgünüm, şu an yardımcı olamıyorum.";
   }
 };

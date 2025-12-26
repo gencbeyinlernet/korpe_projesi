@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import { useState } from 'react';
 import { LandingPage } from './components/LandingPage';
 import { StudentDashboard } from './components/StudentDashboard';
 import { AssessmentFlow } from './components/AssessmentFlow';
@@ -6,212 +7,160 @@ import { LoginPage } from './components/LoginPage';
 import { TeacherDashboard } from './components/TeacherDashboard';
 import { PageView, User, CareerReport } from './types';
 import { dbService } from './services/dbService';
+import { AlertCircle, Copy, CheckCircle, Database } from 'lucide-react';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<PageView>(PageView.LANDING);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [viewingStudent, setViewingStudent] = useState<User | null>(null); 
   const [loginError, setLoginError] = useState<string>('');
+  const [showDbFix, setShowDbFix] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleNavigate = (page: PageView) => {
-    setCurrentPage(page);
-    setLoginError('');
-    setViewingStudent(null);
+  const translateError = (error: any): string => {
+    if (!error) return 'Beklenmedik bir hata oluştu.';
+    const code = error.code;
+    const message = error.message || '';
+
+    if (code === '42P01' || message.includes('relation "public.users" does not exist') || message.includes('schema cache')) {
+      setShowDbFix(true);
+      return 'Veritabanı Hatası: "users" tablosu bulunamadı. Lütfen veritabanını güncelleyin.';
+    }
+    if (code === '23505') return 'Bu kullanıcı adı zaten alınmış.';
+    if (code === 'PGRST116') return 'Kullanıcı adı veya şifre yanlış.';
+    if (message.includes('Failed to fetch')) return 'İnternet bağlantısı yok veya veritabanı URL adresi yanlış.';
+    
+    return message || 'İşlem sırasında bir hata oluştu.';
   };
+
+  const sqlCode = `CREATE TABLE IF NOT EXISTS public.users (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  name TEXT,
+  role TEXT,
+  is_assessment_complete BOOLEAN DEFAULT false,
+  teacher_username TEXT,
+  parent_name TEXT,
+  parent_contact TEXT,
+  linked_student_username TEXT,
+  report JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Herkes okuyabilir" ON public.users FOR SELECT USING (true);
+CREATE POLICY "Herkes ekleyebilir" ON public.users FOR INSERT WITH CHECK (true);
+CREATE POLICY "Herkes güncelleyebilir" ON public.users FOR UPDATE USING (true);`;
 
   const handleLogin = async (username: string, pass: string) => {
     setLoading(true);
     setLoginError('');
     try {
       const user = await dbService.login(username, pass);
-      
       if (user) {
         setCurrentUser(user);
-        
-        if (user.role === 'teacher') {
-          setCurrentPage(PageView.TEACHER_DASHBOARD);
-        } else if (user.role === 'parent') {
-          if (user.linkedStudentUsername) {
-            const student = await dbService.getStudentByUsername(user.linkedStudentUsername);
-            if (student) {
-                // View as Parent: We set the current user context but render the dashboard with the student's data
-                setCurrentUser({ ...user, name: `(Veli: ${user.name}) ${student.name}`}); 
-                setViewingStudent(student); // Use viewingStudent state to pass data
-                setCurrentPage(PageView.STUDENT_DASHBOARD);
-            } else {
-                setLoginError('Bağlı öğrenci bulunamadı.');
-                setCurrentUser(null);
-            }
-          } else {
-             setLoginError('Veli hesabında öğrenci bağlantısı yok.');
-          }
-        } else {
-          // Student
-          if (user.isAssessmentComplete) {
-            setCurrentPage(PageView.STUDENT_DASHBOARD);
-          } else {
-            setCurrentPage(PageView.ASSESSMENT);
-          }
-        }
+        if (user.role === 'teacher') setCurrentPage(PageView.TEACHER_DASHBOARD);
+        else if (user.isAssessmentComplete) setCurrentPage(PageView.STUDENT_DASHBOARD);
+        else setCurrentPage(PageView.ASSESSMENT);
       } else {
         setLoginError('Kullanıcı adı veya şifre hatalı.');
       }
-    } catch (err) {
-      setLoginError('Giriş yapılırken bir hata oluştu.');
-      console.error(err);
+    } catch (err: any) {
+      setLoginError(translateError(err));
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGuestLogin = () => {
-    setCurrentUser(null); 
-    setCurrentPage(PageView.ASSESSMENT);
   };
 
   const handleRegister = async (newUserData: Omit<User, 'id'>, report?: CareerReport) => {
     setLoading(true);
     setLoginError('');
-    
     try {
-      // If we have a report (coming from assessment), attach it
-      const userDataToSave = { ...newUserData, report };
-      
-      const newUser = await dbService.register(userDataToSave);
-      
+      const newUser = await dbService.register({ ...newUserData, report });
       if (newUser) {
         setCurrentUser(newUser);
-        if (newUser.role === 'teacher') {
-            setCurrentPage(PageView.TEACHER_DASHBOARD);
-        } else if (newUser.role === 'student') {
-            if (newUser.isAssessmentComplete) {
-                setCurrentPage(PageView.STUDENT_DASHBOARD);
-            } else {
-                setCurrentPage(PageView.ASSESSMENT);
-            }
-        } else {
-             handleLogin(newUser.username, newUser.password || '');
-        }
+        setCurrentPage(newUser.isAssessmentComplete ? PageView.STUDENT_DASHBOARD : PageView.ASSESSMENT);
       }
     } catch (error: any) {
-      if (error.code === '23505') { // Postgres unique_violation code
-        setLoginError('Bu kullanıcı adı zaten alınmış.');
-      } else {
-        setLoginError('Kayıt sırasında hata oluştu.');
-      }
-      // Stay on login/register page if error, but if coming from assessment we might need better UX
-      // For now, if called from Login page, the error state will show there.
+      setLoginError(translateError(error));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    setCurrentUser(null);
-    setViewingStudent(null);
-    setCurrentPage(PageView.LANDING);
-  };
-
-  const handleAddStudent = async (newStudentData: Omit<User, 'id'>) => {
-    // Used by Teacher Dashboard to quick add
-    try {
-       await dbService.register(newStudentData);
-       // TeacherDashboard will refresh its list on its own via state or trigger
-       return true;
-    } catch (e) {
-       console.error(e);
-       return false;
-    }
-  };
-
-  const handleViewStudent = (student: User) => {
-     setViewingStudent(student);
-     setCurrentPage(PageView.STUDENT_DASHBOARD);
-  };
-
-  const handleBackToTeacherDashboard = () => {
-    setViewingStudent(null);
-    setCurrentPage(PageView.TEACHER_DASHBOARD);
-  };
-
-  // Called when assessment finishes
   const handleAssessmentComplete = async (report: CareerReport) => {
     if (currentUser && currentUser.id !== 'guest') {
-      // Logged in user: Save to DB
-      const success = await dbService.updateUserReport(currentUser.id, report);
-      if (success) {
-        const updatedUser = { ...currentUser, isAssessmentComplete: true, report };
-        setCurrentUser(updatedUser);
+      try {
+        await dbService.updateUserReport(currentUser.id, report);
+        setCurrentUser({ ...currentUser, isAssessmentComplete: true, report });
         setCurrentPage(PageView.STUDENT_DASHBOARD);
-      } else {
-        alert("Rapor kaydedilirken bir hata oluştu, ancak sonuçları görüntüleyebilirsiniz.");
-        const updatedUser = { ...currentUser, isAssessmentComplete: true, report };
-        setCurrentUser(updatedUser);
-        setCurrentPage(PageView.STUDENT_DASHBOARD);
+      } catch (error) {
+        alert('Rapor kaydedilirken hata oluştu: ' + translateError(error));
       }
     } else {
-        // Guest User: Just show dashboard temporarily
-        setCurrentUser({ 
-            id: 'guest', 
-            username: 'guest', 
-            name: 'Misafir Öğrenci', 
-            role: 'student',
-            report: report 
-        });
-        setCurrentPage(PageView.STUDENT_DASHBOARD);
+      setCurrentUser({ id: 'guest', username: 'guest', name: 'Misafir', role: 'student', report });
+      setCurrentPage(PageView.STUDENT_DASHBOARD);
     }
   };
 
   return (
-    <div className="font-sans text-gray-900 antialiased">
+    <div className="font-sans text-gray-900 antialiased relative">
       {loading && (
-        <div className="fixed inset-0 bg-white/50 z-[100] flex items-center justify-center backdrop-blur-sm">
-           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-korpe-600"></div>
+        <div className="fixed inset-0 bg-white/60 z-[100] flex items-center justify-center backdrop-blur-sm">
+           <div className="flex flex-col items-center gap-3">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-korpe-600"></div>
+              <p className="text-korpe-700 font-bold">İşleniyor...</p>
+           </div>
         </div>
       )}
 
-      {currentPage === PageView.LANDING && (
-        <LandingPage onNavigate={handleNavigate} />
-      )}
-      
-      {currentPage === PageView.LOGIN && (
-        <LoginPage 
-            onLogin={handleLogin} 
-            onRegister={handleRegister} 
-            onGuestLogin={handleGuestLogin}
-            error={loginError} 
-        />
+      {showDbFix && (
+        <div className="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-scale-up">
+            <div className="flex items-center gap-4 text-red-600 mb-6">
+              <Database size={40} className="animate-pulse" />
+              <h2 className="text-2xl font-bold">Veritabanı Kurulumu Gerekli!</h2>
+            </div>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Supabase projenizde <strong>'users'</strong> tablosu bulunamadı. Lütfen Supabase panelinize gidin ve <strong>SQL Editor</strong> kısmına aşağıdaki kodu yapıştırıp <strong>RUN</strong> tuşuna basın.
+            </p>
+            <div className="bg-gray-900 rounded-xl p-4 mb-6 relative group">
+              <pre className="text-green-400 text-xs overflow-x-auto max-h-48 scrollbar-thin">
+                {sqlCode}
+              </pre>
+              <button 
+                onClick={() => { navigator.clipboard.writeText(sqlCode); alert('Kod panoya kopyalandı!'); }}
+                className="absolute top-2 right-2 bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg transition"
+              >
+                <Copy size={16} />
+              </button>
+            </div>
+            <div className="flex gap-4">
+              <button 
+                onClick={() => setShowDbFix(false)}
+                className="flex-1 bg-korpe-600 text-white py-3 rounded-xl font-bold hover:bg-korpe-700 transition"
+              >
+                Kapat ve Tekrar Dene
+              </button>
+              <a 
+                href={`https://supabase.com/dashboard/project/thaznfdubnjqirzelnbr/sql/new`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-200 transition text-center flex items-center justify-center gap-2"
+              >
+                SQL Editor'ı Aç
+              </a>
+            </div>
+          </div>
+        </div>
       )}
 
-      {currentPage === PageView.TEACHER_DASHBOARD && currentUser?.role === 'teacher' && (
-        <TeacherDashboard 
-          currentUser={currentUser}
-          onAddStudent={handleAddStudent} 
-          onViewStudent={handleViewStudent}
-          onLogout={handleLogout} 
-        />
-      )}
-
-      {currentPage === PageView.ASSESSMENT && (
-        <AssessmentFlow 
-            isGuest={currentUser?.id === 'guest' || !currentUser}
-            onComplete={handleAssessmentComplete} 
-            onRegisterAndSave={handleRegister}
-        />
-      )}
-
-      {currentPage === PageView.STUDENT_DASHBOARD && (
-        <StudentDashboard 
-            // If viewingStudent is set (Teacher/Parent viewing), use that. Otherwise use currentUser.
-            user={viewingStudent || currentUser || undefined} 
-            onLogout={handleLogout}
-            viewerRole={currentUser?.role === 'teacher' ? 'teacher' : 'student'}
-            onBackToTeacher={handleBackToTeacherDashboard}
-        />
-      )}
+      {currentPage === PageView.LANDING && <LandingPage onNavigate={setCurrentPage} />}
+      {currentPage === PageView.LOGIN && <LoginPage onLogin={handleLogin} onRegister={handleRegister} onGuestLogin={() => { setCurrentUser(null); setCurrentPage(PageView.ASSESSMENT); }} error={loginError} />}
+      {currentPage === PageView.ASSESSMENT && <AssessmentFlow isGuest={!currentUser} onComplete={handleAssessmentComplete} onRegisterAndSave={handleRegister} />}
+      {currentPage === PageView.STUDENT_DASHBOARD && <StudentDashboard user={viewingStudent || currentUser || undefined} onLogout={() => setCurrentPage(PageView.LANDING)} viewerRole={currentUser?.role === 'teacher' ? 'teacher' : 'student'} onBackToTeacher={() => setCurrentPage(PageView.TEACHER_DASHBOARD)} />}
+      {currentPage === PageView.TEACHER_DASHBOARD && <TeacherDashboard currentUser={currentUser || undefined} onAddStudent={async (s) => { try { await dbService.register(s); return true; } catch (e) { alert(translateError(e)); return false; } }} onViewStudent={(s) => { setViewingStudent(s); setCurrentPage(PageView.STUDENT_DASHBOARD); }} onLogout={() => setCurrentPage(PageView.LANDING)} />}
     </div>
   );
 }
-
 export default App;
