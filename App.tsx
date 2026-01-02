@@ -28,7 +28,7 @@ function App() {
     }
     if (code === '23505') return 'Bu kullanıcı adı zaten alınmış.';
     if (code === 'PGRST116') return 'Kullanıcı adı veya şifre yanlış.';
-    if (message.includes('Failed to fetch')) return 'İnternet bağlantısı yok veya veritabanı URL adresi yanlış.';
+    if (message.includes('Failed to fetch')) return 'Bağlantı Hatası: Sunucuya ulaşılamıyor. Lütfen internet bağlantınızı kontrol edin ve Supabase URL adresinin doğru olduğundan emin olun.';
     
     return message || 'İşlem sırasında bir hata oluştu.';
   };
@@ -79,7 +79,11 @@ CREATE POLICY "Herkes güncelleyebilir" ON public.users FOR UPDATE USING (true);
       const newUser = await dbService.register({ ...newUserData, report });
       if (newUser) {
         setCurrentUser(newUser);
-        setCurrentPage(newUser.isAssessmentComplete ? PageView.STUDENT_DASHBOARD : PageView.ASSESSMENT);
+        if (newUser.role === 'teacher') {
+          setCurrentPage(PageView.TEACHER_DASHBOARD);
+        } else { // For students and parents
+          setCurrentPage(newUser.isAssessmentComplete ? PageView.STUDENT_DASHBOARD : PageView.ASSESSMENT);
+        }
       }
     } catch (error: any) {
       setLoginError(translateError(error));
@@ -143,7 +147,7 @@ CREATE POLICY "Herkes güncelleyebilir" ON public.users FOR UPDATE USING (true);
                 Kapat ve Tekrar Dene
               </button>
               <a 
-                href={`https://supabase.com/dashboard/project/thaznfdubnjqirzelnbr/sql/new`}
+                href={`https://supabase.com/dashboard/project/valmmufubkndxcygnrgk/sql/new`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-200 transition text-center flex items-center justify-center gap-2"

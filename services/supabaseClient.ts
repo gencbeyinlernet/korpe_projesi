@@ -1,9 +1,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Yeni Supabase Proje Bilgileri (Project ID: thaznfdubnjqirzelnbr)
-const supabaseUrl = 'https://thaznfdubnjqirzelnbr.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoYXpuZmR1Ym5qcWlyemVsbmJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3NDM5OTIsImV4cCI6MjA4MjMxOTk5Mn0.40pV8fqen6U7Qrox28g3autBanV2XqzrnqVCSdmAoGA';
+// Yeni Supabase Proje Bilgileri (Project ID: valmmufubkndxcygnrgk)
+const supabaseUrl = 'https://valmmufubkndxcygnrgk.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhbG1tdWZ1YmtuZHhjeWducmdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNDUzMDEsImV4cCI6MjA4MjkyMTMwMX0.nSYqpsNd3EFFl-F_9D5XaWMaDW-fYY3VnLbLW7udUAA';
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 

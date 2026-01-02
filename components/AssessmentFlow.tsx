@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Brain, Loader2, Save, UserPlus, ArrowRight, Gauge, BookOpen, GraduationCap, SkipForward, CheckCircle2, Lightbulb, Target, Code, MessageCircle, Users, TrendingUp } from 'lucide-react';
 import { User, CareerReport, SupplementalData, AssessmentStage } from '../types';
 import { generateCareerReport } from '../services/geminiService';
@@ -68,6 +68,14 @@ const MI_KEY = {
   Musical: [20, 21, 22, 23, 24], Interpersonal: [25, 26, 27, 28, 29], Intrapersonal: [30, 31, 32, 33, 34], Naturalist: [35, 36, 37, 38, 39]
 };
 
+const loadingMessages = [
+  "Kişilik ve ilgi envanterleriniz analiz ediliyor...",
+  "Çoklu zeka profiliniz yorumlanıyor...",
+  "Akademik verilerinizle potansiyeliniz birleştiriliyor...",
+  "Size en uygun kariyerler belirleniyor...",
+  "Kişisel gelişim yol haritanız oluşturuluyor..."
+];
+
 export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({ onComplete, onRegisterAndSave, isGuest }) => {
   const [stage, setStage] = useState<AssessmentStage>('holland');
   const [hollandStep, setHollandStep] = useState(0);
@@ -81,7 +89,22 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({ onComplete, onRe
     technicalSkills: { coding: 1, problemSolving: 1, teamwork: 1, presentation: 1 }
   });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [regData, setRegData] = useState({ name: '', username: '', password: '', teacherUsername: '', parentName: '', parentContact: '' });
+
+  useEffect(() => {
+    let interval: number | undefined;
+    if (isAnalyzing) {
+      interval = window.setInterval(() => {
+        setLoadingMessageIndex(prevIndex => (prevIndex + 1) % loadingMessages.length);
+      }, 3500);
+    }
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isAnalyzing]);
 
   const handleHollandAnswer = (choice: 'like' | 'neutral' | 'dislike') => {
     setHollandAnswers(prev => ({ ...prev, [hollandStep]: choice }));
@@ -121,13 +144,20 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({ onComplete, onRe
     setIsAnalyzing(false);
   };
 
-  if (isAnalyzing) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-center animate-fade-in">
-      <Loader2 className="w-16 h-16 text-korpe-600 animate-spin mb-6" />
-      <h2 className="text-2xl font-bold">Raporunuz Hazırlanıyor...</h2>
-      <p className="text-gray-500 mt-2">Gemini AI zeka ve ilgi alanlarınızı analiz ediyor.</p>
-    </div>
-  );
+  if (isAnalyzing) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-center animate-fade-in p-4">
+        <Loader2 className="w-16 h-16 text-korpe-600 animate-spin mb-6" />
+        <h2 className="text-2xl font-bold text-gray-900">Raporunuz Hazırlanıyor...</h2>
+        <p className="text-gray-500 mt-2 h-6 transition-opacity duration-500">
+          {loadingMessages[loadingMessageIndex]}
+        </p>
+        <p className="text-xs text-gray-400 mt-8">
+          Bu işlem bir dakika kadar sürebilir. Lütfen bekleyin.
+        </p>
+      </div>
+    );
+  }
 
   if (stage === 'transition_to_mi' || stage === 'transition_to_academic') return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
