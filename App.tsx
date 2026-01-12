@@ -147,7 +147,7 @@ CREATE POLICY "Herkes güncelleyebilir" ON public.users FOR UPDATE USING (true);
                 Kapat ve Tekrar Dene
               </button>
               <a 
-                href={`https://supabase.com/dashboard/project/valmmufubkndxcygnrgk/sql/new`}
+                href={`https://supabase.com/dashboard/project/ntohbvlbnrqblpgrdmjs/sql/new`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-200 transition text-center flex items-center justify-center gap-2"
